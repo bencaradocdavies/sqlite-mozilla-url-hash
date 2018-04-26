@@ -1,7 +1,7 @@
 /*
  * SQLite extension to calculate the url_hash used in places.sqlite by Mozilla Firefox 50 and later.
  *
- * The Mozilla Firefox hash implementation can be found in these file:
+ * The Mozilla Firefox hash implementation can be found in these files:
  * https://dxr.mozilla.org/mozilla-central/source/toolkit/components/places/Database.cpp
  * https://dxr.mozilla.org/mozilla-central/source/toolkit/components/places/Helpers.cpp
  * https://dxr.mozilla.org/mozilla-central/source/mfbt/HashFunctions.h
