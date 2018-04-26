@@ -1,6 +1,12 @@
-build:
-	gcc -Wall -O2 -fPIC -shared sqlite3-mozilla-url-hash.c -o sqlite3-mozilla-url-hash.so
-	strip sqlite3-mozilla-url-hash.so
+all : test sqlite-mozilla-url-hash.so
 
-clean:
-	rm -f sqlite3-mozilla-url-hash.so
+test : test.c hash.c
+	gcc -Wall -O2 $^ -o $@
+	./$@
+
+sqlite-mozilla-url-hash.so : hash.c
+	gcc -Wall -O2 -fPIC -shared $< -o $@
+	strip $@
+
+clean :
+	rm -f test sqlite-mozilla-url-hash.so 
