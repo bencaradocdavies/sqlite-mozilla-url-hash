@@ -1,22 +1,31 @@
+/*
+ * SQLite extension to calculate the url_hash used in places.sqlite by Mozilla Firefox 50 and later.
+ *
+ * The Mozilla Firefox hash implementation can be found in these file:
+ * https://dxr.mozilla.org/mozilla-central/source/toolkit/components/places/Database.cpp
+ * https://dxr.mozilla.org/mozilla-central/source/toolkit/components/places/Helpers.cpp
+ * https://dxr.mozilla.org/mozilla-central/source/mfbt/HashFunctions.h
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 #include "sqlite3ext.h"
 SQLITE_EXTENSION_INIT1
 #include <assert.h>
 #include <stdint.h>
 
-/* https://dxr.mozilla.org/mozilla-central/source/mfbt/HashFunctions.h#64 */
 static const uint32_t golden_ratio = 0x9E3779B9U;
 
-/* https://dxr.mozilla.org/mozilla-central/source/mfbt/HashFunctions.h#70 */
 static uint32_t rotate_left_5(uint32_t value) {
     return (value << 5) | (value >> 27);
 }
 
-/* https://dxr.mozilla.org/mozilla-central/source/mfbt/HashFunctions.h#76 */
 static uint32_t add_to_hash(uint32_t hash, uint32_t value) {
     return golden_ratio * (rotate_left_5(hash) ^ value);
 }
 
-/* https://dxr.mozilla.org/mozilla-central/source/mfbt/HashFunctions.h#238 */
 static uint64_t hash(const unsigned char *bytes, int start, int end) {
     uint32_t hash = 0;
     for (int i = start; i <= end; i++) {
@@ -42,7 +51,6 @@ static void mozilla_url_hash(sqlite3_context *context, int argc, sqlite3_value *
     if (i_colon < 0) {
         return;
     }
-    /* https://dxr.mozilla.org/mozilla-central/source/toolkit/components/places/Helpers.cpp#308 */
     sqlite3_result_int64(context, ((hash(url, 0, i_colon - 1) & 0x0000FFFF) << 32) + hash(url, 0, len - 1));
 }
 
