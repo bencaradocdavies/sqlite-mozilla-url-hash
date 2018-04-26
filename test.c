@@ -12,6 +12,10 @@
 
 uint64_t hash(const unsigned char *url, int len);
 
+/*
+ * Test that the hash of an url has the expected value.
+ * Returns 1 on pass, 0 on failure.
+ */
 static int test(const char *url, uint64_t expected) {
     uint64_t actual = hash((const unsigned char *) url, strlen(url));
     printf("url=\"%s\", expected=%lu, actual=%lu, result=", url, expected, actual);
@@ -26,6 +30,10 @@ static int test(const char *url, uint64_t expected) {
 
 int main(int argc, char *argv[]) {
     int count = 0;
+    /*
+     * Test hash values were created by manually bookmarking these URLs in
+     * Mozilla Firefox 59.0.2 and then examining places.sqlite with sqlite3.
+     */
     count += test("http://example.org/", 125508604170377UL);
     count += test("https://example.org/", 47358175329495UL);
     count += test("https://www.reddit.com/", 47359719085711UL);
