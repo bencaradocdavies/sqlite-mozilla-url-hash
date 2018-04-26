@@ -26,32 +26,38 @@ static uint32_t add_to_hash(uint32_t hash, uint32_t value) {
     return golden_ratio * (rotate_left_5(hash) ^ value);
 }
 
-static uint64_t hash(const unsigned char *bytes, int start, int end) {
+/* Calculate the 32-bit hash of the first len bytes of url. */
+static uint64_t hash_simple(const unsigned char *url, int len) {
     uint32_t hash = 0;
-    for (int i = start; i <= end; i++) {
-        hash = add_to_hash(hash, bytes[i]);
+    for (int i = 0; i < len; i++) {
+        hash = add_to_hash(hash, url[i]);
     }
     return hash;
 }
 
-static void mozilla_url_hash(sqlite3_context *context, int argc, sqlite3_value **argv){
+/*
+ * Calculate the 48-bit hash of the first len bytes of url. This hash includes a
+ * 16-bit hash of any prefix (characters before the first ":").
+ */
+uint64_t hash(const unsigned char *url, int len) {
+    int prefix = -1;
+    for (int i = 0; i < len; i++) {
+        if (url[i] == ':') {
+            prefix = i;
+            break;
+        }
+    }
+    return ((hash_simple(url, prefix) & 0x0000FFFF) << 32) + hash_simple(url, len);
+}
+
+static void sqlite_hash(sqlite3_context *context, int argc, sqlite3_value **argv){
     assert(argc == 1);
     if(sqlite3_value_type(argv[0]) == SQLITE_NULL) {
         return;
     }
-    int len = sqlite3_value_bytes(argv[0]);
     const unsigned char *url = sqlite3_value_text(argv[0]);
-    int i_colon = -1;
-    for (int i = 0; i < len; i++) {
-        if (url[i] == ':') {
-            i_colon = i;
-            break;
-        }
-    }
-    if (i_colon < 0) {
-        return;
-    }
-    sqlite3_result_int64(context, ((hash(url, 0, i_colon - 1) & 0x0000FFFF) << 32) + hash(url, 0, len - 1));
+    int len = sqlite3_value_bytes(argv[0]);
+    sqlite3_result_int64(context, hash(url, len));
 }
 
 #ifdef _WIN32
@@ -59,5 +65,5 @@ __declspec(dllexport)
 #endif
 int sqlite3_sqlitemozillaurlhash_init(sqlite3 *db, char **pzErrMsg, const sqlite3_api_routines *pApi){
     SQLITE_EXTENSION_INIT2(pApi);
-    return sqlite3_create_function(db, "hash", 1, SQLITE_UTF8, 0, mozilla_url_hash, 0, 0);
+    return sqlite3_create_function(db, "hash", 1, SQLITE_UTF8, 0, sqlite_hash, 0, 0);
 }
